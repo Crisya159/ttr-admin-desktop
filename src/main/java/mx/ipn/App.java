@@ -16,14 +16,16 @@ import org.bson.Document;
 
 
 public class App {
-    
+
     MongoClient mongoClient;
 
     public App(MongoClient mongoClient) {
         this.mongoClient = mongoClient;
     }
 
-    public FindIterable<Document> getReports() {
+    public List<Document> getReports() {
+        List<Document> statusReports = new ArrayList<>();
+
         try {
             // Send a ping to confirm a successful connection
             MongoDatabase database = mongoClient.getDatabase("test");
@@ -35,8 +37,18 @@ public class App {
             // Query for all the PDF files
             Document query = new Document();
             FindIterable<Document> reports = collection.find(query);
-            
-            return reports;
+
+            for(Document report : reports){
+                // lookup for the tt that contains the report id in the reportes list of reports ids
+                MongoCollection<Document> collection2 = mongoClient.getDatabase("test").getCollection("tts");
+                Document query2 = new Document("reportes", report.get("_id"));
+                FindIterable<Document> tts = collection2.find(query2);
+                Document tt = tts.first();
+                report.put("numero_tt", tt.get("numero_tt"));
+                statusReports.add(report);
+            }
+
+            return statusReports;
 
         } catch (MongoException e) {
             e.printStackTrace();
@@ -169,7 +181,7 @@ public class App {
             reporte.put("comentarios", comentarios);
             collection2.replaceOne(Filters.eq("_id", reporte.get("_id")), reporte);
             System.out.println("Reporte evaluado");
-            
+
 
             // obtener los usuarios que estan suscritos al TT
             MongoCollection<Document> collection3 = mongoClient.getDatabase("test").getCollection("users");
@@ -180,7 +192,7 @@ public class App {
             for(Document user : users){
                 usersList.add(user);
             }
-            
+
             Notificacion notificacion = new Notificacion();
             notificacion.sendNotification(usersList, reporte);
 
@@ -195,9 +207,9 @@ public class App {
         try {
             MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("users");
             FindIterable<Document> users = collection.find();
-    
+
             List<Document> modifiedUsers = new ArrayList<>();
-    
+
             for (Document user : users) {
                 MongoCollection<Document> collection2 = mongoClient.getDatabase("test").getCollection("tts");
                 Document query2 = new Document("_id", new Document("$eq", user.get("tt")));

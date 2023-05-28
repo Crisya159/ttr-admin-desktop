@@ -19,7 +19,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.ServerApi;
 import com.mongodb.ServerApiVersion;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 
@@ -62,10 +61,8 @@ public class Interfaz extends JFrame{
         tabbedPane = new JTabbedPane();
         getContentPane().add(tabbedPane);
 
-        // Panel de inicio
-        JPanel inicioPanel = new JPanel(new BorderLayout());
-        tabbedPane.addTab("Inicio", inicioPanel);
-        inicioPanel.add(new JLabel("Bienvenido al sistema para reportes de Trabajo Terminal", SwingConstants.CENTER));
+        //Panel Principal
+        generaTabPrincipal();
 
         // Panel de todos los PDFs
         generaTabAllReportes();
@@ -83,30 +80,74 @@ public class Interfaz extends JFrame{
         setVisible(true);
     }
 
+    //Metodo para generar la pestaña principal
+    private void generaTabPrincipal(){
+        JPanel principalPanel = new JPanel(new BorderLayout());
+        tabbedPane.add("Inicio", principalPanel );
+        principalPanel.add(new JLabel("Bienvenido al sistema para reportes de Trabajo Terminal", SwingConstants.CENTER), BorderLayout.CENTER);
+
+        JPanel avisoPanel = new JPanel(new BorderLayout());
+        principalPanel.add(avisoPanel, BorderLayout.SOUTH);
+        //avisoPanel.add(new JLabel("<html><body style='width: 80%'>Política de uso: El Departamento de Extensión y Apoyos Educativos de la Escuela Superior de Cómputo (ESCOM) del Instituto Politécnico Nacional (IPN), es el responsable del uso que se da a la información que se ingrese a este sistema, y su uso estará sujeto a su previa autorización y en apego al Artículo 16 de la Constitución Política de los Estados Unidos Mexicanos y la normatividad establecida por el Instituto Nacional de Acceso a la Información (INAI).</body></html>", SwingConstants.CENTER), BorderLayout.NORTH);
+        //avisoPanel.add(new JLabel("<html><body style='width: 80%; text-align:center'>Política de uso: El Departamento de Extensión y Apoyos Educativos de la Escuela Superior de Cómputo (ESCOM) del Instituto Politécnico Nacional (IPN). <br>        Aviso de Privacidad: La información que ingrese será para el uso exclusivo del control de los reportes de trabajo terminal II, y no podrá ser utilizada con otros fines.</body></html>", SwingConstants.CENTER), BorderLayout.SOUTH);
+        avisoPanel.add(
+            new JLabel(
+                "<html><body style='width: 80%'>"+
+                "Política de uso: El Departamento de Extensión y Apoyos Educativos de la Escuela Superior de Cómputo (ESCOM) del Instituto Politécnico Nacional (IPN), es el responsable del uso que se da a la información que se ingrese a este sistema, y su uso estará sujeto a su previa autorización y en apego al Artículo 16 de la Constitución Política de los Estados Unidos Mexicanos y la normatividad establecida por el Instituto Nacional de Acceso a la Información (INAI)."+
+                "<br>"+
+                "Aviso de Privacidad: La información que ingrese será para el uso exclusivo del control de los reportes de trabajo terminal II, y no podrá ser utilizada con otros fines."+
+                "</body></html>"
+            , SwingConstants.CENTER), BorderLayout.SOUTH
+        );
+    }
+
     // Metodo para generar la pestaña donde se muestran todos los PDFs
     private void generaTabAllReportes(){
         JPanel allPDFsPanel = new JPanel(new BorderLayout());
         tabbedPane.addTab("Todos los PDFs", allPDFsPanel);
         allPDFsPanel.add(new JLabel("Todos los PDFs"), BorderLayout.LINE_START);
         // Se obtienen todos los PDFs
-        FindIterable<Document> reports = app.getReports();
-        // Se crea una lista para mostrar los PDFs
-        JList<String> allPDFsList = new JList<String>();
-        // Se crea un scroll para la lista
-        JScrollPane allPDFsScrollPane = new JScrollPane(allPDFsList);
-        // Se agrega la lista al panel
-        allPDFsPanel.add(allPDFsScrollPane, BorderLayout.CENTER);
-        // Se crea una lista para guardar los nombres de los PDFs
-        ArrayList<String> allPDFs = new ArrayList<String>();
-        // Se agregan los nombres de los PDFs a la lista
-        for (Document report : reports) {
-            allPDFs.add(report.get("filename").toString() + " version: " + report.get("version").toString());
+        List<Document> reports = app.getReports();
+        // Se crea una tabla para mostrar los reportes
+        JTable reportesRegistradosTable = new JTable();
+        // Se crea un scroll para la tabla
+        JScrollPane reportesRegistradosScrollPane = new JScrollPane(reportesRegistradosTable);
+        // Se agrega la tabla al panel
+        allPDFsPanel.add(reportesRegistradosScrollPane, BorderLayout.CENTER);
+        // Se crea un table model para la tabla
+        DefaultTableModel reportesRegistradosTableModel = new DefaultTableModel(){
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        // Se agregan las columnas al table model
+        reportesRegistradosTableModel.addColumn("Trabajo Terminal");
+        reportesRegistradosTableModel.addColumn("Nombre del reporte técnico");
+        reportesRegistradosTableModel.addColumn("Versión");
+        reportesRegistradosTableModel.addColumn("Fecha de subida");
+        reportesRegistradosTableModel.addColumn("Estatus");
+
+        // Se agregan los usuarios al table model
+        if (reports != null) {
+            for (Document report : reports) {
+                reportesRegistradosTableModel.addRow(new Object[]{report.get("numero_tt"), report.get("filename"), report.get("version"),
+                                                                report.get("createdAt"), report.get("aprobado")});
+            }
+        } else {
+            System.out.println("No se encontraron reportes.");
         }
-        // Se convierte la lista a un arreglo
-        String[] allPDFsArray = new String[allPDFs.size()];
-        allPDFsArray = allPDFs.toArray(allPDFsArray);
-        // Se muestra la lista
-        allPDFsList.setListData(allPDFsArray);
+
+        // Se muestra la tabla
+        reportesRegistradosTable.setModel(reportesRegistradosTableModel);
+        reportesRegistradosTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        reportesRegistradosTable.setRowSelectionAllowed(true);
+        reportesRegistradosTable.setColumnSelectionAllowed(false);
+        reportesRegistradosTable.setRowHeight(30);
+        reportesRegistradosTable.getTableHeader().setReorderingAllowed(false);
+        reportesRegistradosTable.getTableHeader().setResizingAllowed(false);
+        reportesRegistradosTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        reportesRegistradosTable.setAutoCreateRowSorter(true);
     }
 
     // Metodo para generar la pestaña donde se busca por numero de Trabajo Terminal
@@ -691,10 +732,15 @@ public class Interfaz extends JFrame{
                 int selectedRow = usuariosRegistradosTable.getSelectedRow();
                 // Se obtiene el correo electronico del usuario seleccionado
                 String correo = usuariosRegistradosTable.getValueAt(selectedRow, 3).toString();
-                // Se elimina el usuario
-                app.deleteUser(correo);
-                // Se actualiza la tabla
-                usuariosRegistradosTableModel.removeRow(selectedRow);
+                //Mensaje de confirmación
+                int confirmacion = JOptionPane.showConfirmDialog(null, "¿Estás seguro de eliminar este usuario?");
+                if(confirmacion==0){
+                    // Se elimina el usuario
+                    app.deleteUser(correo);
+                    // Se actualiza la tabla
+                    usuariosRegistradosTableModel.removeRow(selectedRow);
+                }
+
             }
         });
     }

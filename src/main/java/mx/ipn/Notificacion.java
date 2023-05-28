@@ -8,8 +8,8 @@ import javax.mail.internet.*;
 import org.bson.Document;
 
 public class Notificacion {
-    private String from = "cmontanoe1200@alumno.ipn.mx"; // Dirección de correo electrónico del remitente
-    private String password = ""; // Contraseña de la dirección de correo electrónico del remitente
+    private String from = "ttr2320003@gmail.com"; // Dirección de correo electrónico del remitente
+    private String password = "fpgmwxamlwshlkjp"; // Contraseña de la dirección de correo electrónico del remitente
     private Properties properties = new Properties(); // Propiedades para la conexión con el servidor SMTP
 
     {
@@ -34,7 +34,7 @@ public class Notificacion {
                     "<p>"+ recipient.get("nombres") +" "+ recipient.get("apellido_paterno") +" "+ recipient.get("apellido_materno") +",</p>" +
                     "<p>Le informamos que se ha revisado su reporte <strong>" + report.get("filename") + "</strong> version <strong>" + report.get("version") + "</strong>. El resultado de la evaluación para el reporte es: <strong>Aprobado</strong>. La revisión se realizó el " + report.get("updatedAt") + ".</p>" +
                     "<p>Puede revisar sus reportes subidos dando click en el siguiente botón:</p>" +
-                    "<p><a href=\"" + "localhost:4000/user" + "\"><button style=\"background-color: #008CBA; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer;\">Ver reportes</button></a></p>" +
+                    "<p><a href=\"" + "http://localhost:8080/alumno/reportes" + "\"><button style=\"background-color: #008CBA; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer;\">Ver reportes</button></a></p>" +
                     "<p>Saludos</p>" +
                     "<hr>" +
                     "<p><small>Este mensaje es informativo, para cualquier duda favor de presentarse en la oficina de .</small></p>" +
@@ -44,7 +44,7 @@ public class Notificacion {
                     "<p>"+ recipient.get("nombres") +" "+ recipient.get("apellido_paterno") +" "+ recipient.get("apellido_materno") +",</p>" +
                     "<p>Le informamos que se ha revisado su reporte <strong>" + report.get("filename") + "</strong> version " + report.get("version") + ". El resultado de la evaluación para el reporte es: <strong>Rechazado</strong>. La revisión se realizó el " + report.get("updatedAt") + ".</p>" +
                     "<p>Su reporte cuenta con comentarios, para verlos debe acceder a la plataforma web dando click en el siguiente botón:</p>" +
-                    "<p><a href=\"localhost:4000/user\"><button style=\"background-color: #008CBA; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer;\">Ver reportes</button></a></p>" +
+                    "<p><a href=\"http://localhost:8080/alumno/reportes\"><button style=\"background-color: #008CBA; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer;\">Ver reportes</button></a></p>" +
                     "<p>Saludos</p>" +
                     "<hr>" +
                     "<p><small>Este mensaje es informativo, para cualquier duda favor de presentarse en la oficina de .</small></p>" +
