@@ -7,10 +7,15 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.bson.Document;
 import org.bson.types.Binary;
 
@@ -101,19 +106,9 @@ public class Interfaz extends JFrame{
         );
     }
 
-    // Metodo para generar la pestaña donde se muestran todos los PDFs
-    private void generaTabAllReportes(){
-        JPanel allPDFsPanel = new JPanel(new BorderLayout());
-        tabbedPane.addTab("Todos los PDFs", allPDFsPanel);
-        allPDFsPanel.add(new JLabel("Todos los PDFs"), BorderLayout.LINE_START);
-        // Se obtienen todos los PDFs
+    private DefaultTableModel generaTablaReportes(){
+        // Se obtienen todos los reportes
         List<Document> reports = app.getReports();
-        // Se crea una tabla para mostrar los reportes
-        JTable reportesRegistradosTable = new JTable();
-        // Se crea un scroll para la tabla
-        JScrollPane reportesRegistradosScrollPane = new JScrollPane(reportesRegistradosTable);
-        // Se agrega la tabla al panel
-        allPDFsPanel.add(reportesRegistradosScrollPane, BorderLayout.CENTER);
         // Se crea un table model para la tabla
         DefaultTableModel reportesRegistradosTableModel = new DefaultTableModel(){
             @Override
@@ -121,6 +116,7 @@ public class Interfaz extends JFrame{
                 return false;
             }
         };
+
         // Se agregan las columnas al table model
         reportesRegistradosTableModel.addColumn("Trabajo Terminal");
         reportesRegistradosTableModel.addColumn("Nombre del reporte técnico");
@@ -138,8 +134,29 @@ public class Interfaz extends JFrame{
             System.out.println("No se encontraron reportes.");
         }
 
+        return reportesRegistradosTableModel;
+    }
+
+    // Metodo para generar la pestaña donde se muestran todos los PDFs
+    private void generaTabAllReportes(){
+        JPanel allPDFsPanel = new JPanel(new BorderLayout());
+        tabbedPane.addTab("Todos los PDFs", allPDFsPanel);
+        allPDFsPanel.add(new JLabel("Tabla de todos los reportes técnicos", SwingConstants.CENTER), BorderLayout.NORTH);
+        JButton botonActualizar = new JButton("Actualizar");
+        allPDFsPanel.add(botonActualizar, BorderLayout.EAST);
+
+
+        // Se crea una tabla para mostrar los reportes
+        JTable reportesRegistradosTable = new JTable();
+        // Se crea un scroll para la tabla
+        JScrollPane reportesRegistradosScrollPane = new JScrollPane(reportesRegistradosTable);
+        // Se agrega la tabla al panel
+        allPDFsPanel.add(reportesRegistradosScrollPane, BorderLayout.CENTER);
+
+        DefaultTableModel newModel = generaTablaReportes();
+
         // Se muestra la tabla
-        reportesRegistradosTable.setModel(reportesRegistradosTableModel);
+        reportesRegistradosTable.setModel(newModel);
         reportesRegistradosTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         reportesRegistradosTable.setRowSelectionAllowed(true);
         reportesRegistradosTable.setColumnSelectionAllowed(false);
@@ -148,12 +165,104 @@ public class Interfaz extends JFrame{
         reportesRegistradosTable.getTableHeader().setResizingAllowed(false);
         reportesRegistradosTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         reportesRegistradosTable.setAutoCreateRowSorter(true);
+
+        // Se actualiza la lista de todos los reportes
+        botonActualizar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                DefaultTableModel newModel = generaTablaReportes();
+                reportesRegistradosTable.setModel(newModel);
+                reportesRegistradosTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                reportesRegistradosTable.setRowSelectionAllowed(true);
+                reportesRegistradosTable.setColumnSelectionAllowed(false);
+                reportesRegistradosTable.setRowHeight(30);
+                reportesRegistradosTable.getTableHeader().setReorderingAllowed(false);
+                reportesRegistradosTable.getTableHeader().setResizingAllowed(false);
+                reportesRegistradosTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+                reportesRegistradosTable.setAutoCreateRowSorter(true);
+            }
+        });
+        //Boton para convertir la tabla a PDF
+        JButton botonImprimirPdfTablaReportes = new JButton("Imprimir como PDF");
+        allPDFsPanel.add(botonImprimirPdfTablaReportes, BorderLayout.SOUTH);
+
+        botonImprimirPdfTablaReportes.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    // Create a new PDDocument
+                    PDDocument document = new PDDocument();
+
+                    // Create a new PDPage
+                    PDRectangle pageSize = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
+                    PDPage page = new PDPage(pageSize);
+
+                    // Add the PDPage to the document
+                    document.addPage(page);
+
+                    // Create a PDPageContentStream to write content
+                    PDPageContentStream contentStream = new PDPageContentStream(document, page);
+
+                    // Set font and font size for content
+                    contentStream.setFont(PDType1Font.HELVETICA, 12);
+
+                    // Set the initial position on the page
+                    float margin = 50;
+                    float yPosition = page.getMediaBox().getHeight() - margin;
+
+                    // Write the BSON documents onto the PDF page
+                    for (int i = 0; i < newModel.getRowCount(); i++) {
+                        StringBuilder line = new StringBuilder();
+                        for (int j = 0; j < newModel.getColumnCount(); j++) {
+                            if (j > 0) {
+                                line.append(" | ");
+                            }
+                            line.append(newModel.getValueAt(i, j));
+                        }
+
+                        // Write the BSON document onto the PDF page
+                        contentStream.beginText();
+                        contentStream.newLineAtOffset(margin, yPosition);
+                        contentStream.showText(line.toString());
+                        contentStream.endText();
+
+                        // Move to the next line
+                        yPosition -= 15;
+
+                        // Check if a new page is needed
+                        if (yPosition < margin) {
+                            contentStream.close();
+                            page = new PDPage();
+                            document.addPage(page);
+                            contentStream = new PDPageContentStream(document, page);
+                            yPosition = page.getMediaBox().getHeight() - margin;
+                        }
+                    }
+
+                    // Close the content stream
+                    contentStream.close();
+
+                    // Create a temporary file to hold the PDF content
+                    File tempFile = File.createTempFile("bson_documents", ".pdf");
+                    tempFile.deleteOnExit();
+
+                    // Save the document to the temporary file
+                    document.save(tempFile);
+                    document.close();
+
+                    // Open the PDF file in a browser
+                    Desktop.getDesktop().browse(tempFile.toURI());
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+
     }
+
 
     // Metodo para generar la pestaña donde se busca por numero de Trabajo Terminal
     private void generaTabBuscaPorTT(){
         JPanel buscaPorTTPanel = new JPanel(new BorderLayout());
-        tabbedPane.addTab("Buscar por TT", buscaPorTTPanel);
+        tabbedPane.addTab("Buscar por Trabajo Terminal", buscaPorTTPanel);
         buscaPorTTPanel.add(new JLabel("Buscar por TT", SwingConstants.CENTER), BorderLayout.NORTH);
 
 
@@ -671,21 +780,12 @@ public class Interfaz extends JFrame{
         reportesPendientesList.setModel(listModel);
     }
 
-    // Metodo para generar la pestaña donde se muestran los usuarios registrados en forma de tabla
-    private void generaTabUsuariosRegistrados(){
-        JPanel usuariosRegistradosPanel = new JPanel(new BorderLayout());
-        tabbedPane.addTab("Usuarios Registrados", usuariosRegistradosPanel);
-        usuariosRegistradosPanel.add(new JLabel("Usuarios Registrados"), BorderLayout.LINE_START);
-        // Se obtienen todos los usuarios
-        List<Document> users = app.getUsers();
-        // Se crea una tabla para mostrar los usuarios
-        JTable usuariosRegistradosTable = new JTable();
-        // Se crea un scroll para la tabla
-        JScrollPane usuariosRegistradosScrollPane = new JScrollPane(usuariosRegistradosTable);
-        // Se agrega la tabla al panel
-        usuariosRegistradosPanel.add(usuariosRegistradosScrollPane, BorderLayout.CENTER);
-        // Se crea un table model para la tabla
-        DefaultTableModel usuariosRegistradosTableModel = new DefaultTableModel(){
+    //Metodo para actualizar usuarios
+    private DefaultTableModel actualizarTablaUsuarios(){
+         // Se obtienen todos los usuarios
+         List<Document> users = app.getUsers();
+         // Se crea un table model para la tabla
+         DefaultTableModel usuariosRegistradosTableModel = new DefaultTableModel(){
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -707,9 +807,25 @@ public class Interfaz extends JFrame{
         } else {
             System.out.println("No se encontraron usuarios.");
         }
+        return usuariosRegistradosTableModel;
+    }
+
+    // Metodo para generar la pestaña donde se muestran los usuarios registrados en forma de tabla
+    private void generaTabUsuariosRegistrados(){
+        JPanel usuariosRegistradosPanel = new JPanel(new BorderLayout());
+        tabbedPane.addTab("Usuarios Registrados", usuariosRegistradosPanel);
+        usuariosRegistradosPanel.add(new JLabel("Usuarios Registrados", SwingConstants.CENTER), BorderLayout.NORTH);
+        // Se crea una tabla para mostrar los usuarios
+        JTable usuariosRegistradosTable = new JTable();
+        // Se crea un scroll para la tabla
+        JScrollPane usuariosRegistradosScrollPane = new JScrollPane(usuariosRegistradosTable);
+        // Se agrega la tabla al panel
+        usuariosRegistradosPanel.add(usuariosRegistradosScrollPane, BorderLayout.CENTER);
+
+        DefaultTableModel newModel = actualizarTablaUsuarios();
 
         // Se muestra la tabla
-        usuariosRegistradosTable.setModel(usuariosRegistradosTableModel);
+        usuariosRegistradosTable.setModel(newModel);
         usuariosRegistradosTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         usuariosRegistradosTable.setRowSelectionAllowed(true);
         usuariosRegistradosTable.setColumnSelectionAllowed(false);
@@ -718,6 +834,24 @@ public class Interfaz extends JFrame{
         usuariosRegistradosTable.getTableHeader().setResizingAllowed(false);
         usuariosRegistradosTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         usuariosRegistradosTable.setAutoCreateRowSorter(true);
+
+        //Se crea un boton para actualizar usuarios
+        JButton botonActualizar = new JButton("Actualizar");
+        usuariosRegistradosPanel.add(botonActualizar, BorderLayout.LINE_END);
+        botonActualizar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e){
+                DefaultTableModel newModel = actualizarTablaUsuarios();
+                usuariosRegistradosTable.setModel(newModel);
+                usuariosRegistradosTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                usuariosRegistradosTable.setRowSelectionAllowed(true);
+                usuariosRegistradosTable.setColumnSelectionAllowed(false);
+                usuariosRegistradosTable.setRowHeight(30);
+                usuariosRegistradosTable.getTableHeader().setReorderingAllowed(false);
+                usuariosRegistradosTable.getTableHeader().setResizingAllowed(false);
+                usuariosRegistradosTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+                usuariosRegistradosTable.setAutoCreateRowSorter(true);
+            }
+        });
 
 
         // Se crea un boton para eliminar usuarios
@@ -738,7 +872,7 @@ public class Interfaz extends JFrame{
                     // Se elimina el usuario
                     app.deleteUser(correo);
                     // Se actualiza la tabla
-                    usuariosRegistradosTableModel.removeRow(selectedRow);
+                    newModel.removeRow(selectedRow);
                 }
 
             }
