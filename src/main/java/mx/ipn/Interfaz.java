@@ -7,15 +7,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.bson.Document;
 import org.bson.types.Binary;
 
@@ -69,7 +64,7 @@ public class Interfaz extends JFrame{
         //Panel Principal
         generaTabPrincipal();
 
-        // Panel de todos los PDFs
+        // Panel de todos los reportes
         generaTabAllReportes();
 
         // Panel para buscar por numero de Trabajo Terminal
@@ -89,11 +84,11 @@ public class Interfaz extends JFrame{
     private void generaTabPrincipal(){
         JPanel principalPanel = new JPanel(new BorderLayout());
         tabbedPane.add("Inicio", principalPanel );
-        principalPanel.add(new JLabel("Bienvenido al sistema para reportes de Trabajo Terminal", SwingConstants.CENTER), BorderLayout.CENTER);
+        principalPanel.add(new JLabel("<html><body><h1> Bienvenido a la aplicación para reportes de Trabajo Terminal </h1></body></html>", SwingConstants.CENTER), BorderLayout.CENTER);
 
         JPanel avisoPanel = new JPanel(new BorderLayout());
         principalPanel.add(avisoPanel, BorderLayout.SOUTH);
-        //avisoPanel.add(new JLabel("<html><body style='width: 80%'>Política de uso: El Departamento de Extensión y Apoyos Educativos de la Escuela Superior de Cómputo (ESCOM) del Instituto Politécnico Nacional (IPN), es el responsable del uso que se da a la información que se ingrese a este sistema, y su uso estará sujeto a su previa autorización y en apego al Artículo 16 de la Constitución Política de los Estados Unidos Mexicanos y la normatividad establecida por el Instituto Nacional de Acceso a la Información (INAI).</body></html>", SwingConstants.CENTER), BorderLayout.NORTH);
+        //avisoPanel.add(new JLabel("<html><body style='width: 80%'><p> Política de uso: El Departamento de Extensión y Apoyos Educativos de la Escuela Superior de Cómputo (ESCOM) del Instituto Politécnico Nacional (IPN), es el responsable del uso que se da a la información que se ingrese a este sistema, y su uso estará sujeto a su previa autorización y en apego al Artículo 16 de la Constitución Política de los Estados Unidos Mexicanos y la normatividad establecida por el Instituto Nacional de Acceso a la Información (INAI). </p></body></html>", SwingConstants.CENTER), BorderLayout.NORTH);
         //avisoPanel.add(new JLabel("<html><body style='width: 80%; text-align:center'>Política de uso: El Departamento de Extensión y Apoyos Educativos de la Escuela Superior de Cómputo (ESCOM) del Instituto Politécnico Nacional (IPN). <br>        Aviso de Privacidad: La información que ingrese será para el uso exclusivo del control de los reportes de trabajo terminal II, y no podrá ser utilizada con otros fines.</body></html>", SwingConstants.CENTER), BorderLayout.SOUTH);
         avisoPanel.add(
             new JLabel(
@@ -137,10 +132,10 @@ public class Interfaz extends JFrame{
         return reportesRegistradosTableModel;
     }
 
-    // Metodo para generar la pestaña donde se muestran todos los PDFs
+    // Metodo para generar la pestaña donde se muestran todos los reportes
     private void generaTabAllReportes(){
         JPanel allPDFsPanel = new JPanel(new BorderLayout());
-        tabbedPane.addTab("Todos los PDFs", allPDFsPanel);
+        tabbedPane.addTab("Todos los reportes técnicos", allPDFsPanel);
         allPDFsPanel.add(new JLabel("Tabla de todos los reportes técnicos", SwingConstants.CENTER), BorderLayout.NORTH);
         JButton botonActualizar = new JButton("Actualizar");
         allPDFsPanel.add(botonActualizar, BorderLayout.EAST);
@@ -181,78 +176,17 @@ public class Interfaz extends JFrame{
                 reportesRegistradosTable.setAutoCreateRowSorter(true);
             }
         });
-        //Boton para convertir la tabla a PDF
-        JButton botonImprimirPdfTablaReportes = new JButton("Imprimir como PDF");
-        allPDFsPanel.add(botonImprimirPdfTablaReportes, BorderLayout.SOUTH);
+        //Boton para convertir la tabla a excel
+        JButton botonImprimirExcelTablaReportes = new JButton("Imprimir tabla");
+        allPDFsPanel.add(botonImprimirExcelTablaReportes, BorderLayout.SOUTH);
 
-        botonImprimirPdfTablaReportes.addActionListener(new ActionListener() {
+        botonImprimirExcelTablaReportes.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                try {
-                    // Create a new PDDocument
-                    PDDocument document = new PDDocument();
-
-                    // Create a new PDPage
-                    PDRectangle pageSize = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
-                    PDPage page = new PDPage(pageSize);
-
-                    // Add the PDPage to the document
-                    document.addPage(page);
-
-                    // Create a PDPageContentStream to write content
-                    PDPageContentStream contentStream = new PDPageContentStream(document, page);
-
-                    // Set font and font size for content
-                    contentStream.setFont(PDType1Font.HELVETICA, 12);
-
-                    // Set the initial position on the page
-                    float margin = 50;
-                    float yPosition = page.getMediaBox().getHeight() - margin;
-
-                    // Write the BSON documents onto the PDF page
-                    for (int i = 0; i < newModel.getRowCount(); i++) {
-                        StringBuilder line = new StringBuilder();
-                        for (int j = 0; j < newModel.getColumnCount(); j++) {
-                            if (j > 0) {
-                                line.append(" | ");
-                            }
-                            line.append(newModel.getValueAt(i, j));
-                        }
-
-                        // Write the BSON document onto the PDF page
-                        contentStream.beginText();
-                        contentStream.newLineAtOffset(margin, yPosition);
-                        contentStream.showText(line.toString());
-                        contentStream.endText();
-
-                        // Move to the next line
-                        yPosition -= 15;
-
-                        // Check if a new page is needed
-                        if (yPosition < margin) {
-                            contentStream.close();
-                            page = new PDPage();
-                            document.addPage(page);
-                            contentStream = new PDPageContentStream(document, page);
-                            yPosition = page.getMediaBox().getHeight() - margin;
-                        }
-                    }
-
-                    // Close the content stream
-                    contentStream.close();
-
-                    // Create a temporary file to hold the PDF content
-                    File tempFile = File.createTempFile("bson_documents", ".pdf");
-                    tempFile.deleteOnExit();
-
-                    // Save the document to the temporary file
-                    document.save(tempFile);
-                    document.close();
-
-                    // Open the PDF file in a browser
-                    Desktop.getDesktop().browse(tempFile.toURI());
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+                ImpresoraTabla impresora = new ImpresoraTabla();
+                String ruta = "C:/Users/Luona/OneDrive/Escritorio/";
+                String nombreArchivo= "reportesRegistradosTable.xlsx";
+                impresora.imprimir(reportesRegistradosTable, ruta + nombreArchivo);
+                JOptionPane.showMessageDialog(null, "El archivo se encuentra en el escritorio.");
             }
         });
 
@@ -262,7 +196,7 @@ public class Interfaz extends JFrame{
     // Metodo para generar la pestaña donde se busca por numero de Trabajo Terminal
     private void generaTabBuscaPorTT(){
         JPanel buscaPorTTPanel = new JPanel(new BorderLayout());
-        tabbedPane.addTab("Buscar por Trabajo Terminal", buscaPorTTPanel);
+        tabbedPane.addTab("Buscar reporte técnico por Trabajo Terminal", buscaPorTTPanel);
         buscaPorTTPanel.add(new JLabel("Buscar por TT", SwingConstants.CENTER), BorderLayout.NORTH);
 
 
@@ -527,8 +461,8 @@ public class Interfaz extends JFrame{
     // Metodo para generar la pestaña donde se muestran los reportes pendientes de revision
     private void generaTabReportesPendientes(){
         JPanel reportesPendientesPanel = new JPanel(new BorderLayout());
-        tabbedPane.addTab("Reportes Pendientes", reportesPendientesPanel);
-        reportesPendientesPanel.add(new JLabel("Reportes Pendientes", SwingConstants.CENTER), BorderLayout.NORTH);
+        tabbedPane.addTab("Reportes técnicos pendientes", reportesPendientesPanel);
+        reportesPendientesPanel.add(new JLabel("Reportes técnicos pendientes", SwingConstants.CENTER), BorderLayout.NORTH);
 
         JPanel listaReportesPendientesPanel = new JPanel(new BorderLayout());
         reportesPendientesPanel.add(listaReportesPendientesPanel, BorderLayout.CENTER);
@@ -551,7 +485,7 @@ public class Interfaz extends JFrame{
         reportesPendientesList.setModel(reportesPendientesListModel);
 
         // boton para abrir el reporte seleccionado
-        JButton botonAbrirReporte = new JButton("Abrir Reporte");
+        JButton botonAbrirReporte = new JButton("Abrir reporte técnico");
         listaReportesPendientesPanel.add(botonAbrirReporte, BorderLayout.SOUTH);
 
         // Abrir reporte seleccionado de la lista en un navegador
