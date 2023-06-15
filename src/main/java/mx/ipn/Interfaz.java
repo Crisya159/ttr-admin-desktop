@@ -29,7 +29,7 @@ public class Interfaz extends JFrame{
 
     // ------------------------------------------------------ informacion para conectarse a la base de datos ------------------------------------------------------
     // ------------------------------------------------------------------------(SENSIBLE)--------------------------------------------------------------------------
-    private static String connectionString = "mongodb://localhost:27017/test";
+    private static String connectionString = "mongodb+srv://crisya78:123456a@test.ywvlcxo.mongodb.net/?retryWrites=true&w=majority";
     private static ServerApi serverApi = ServerApi.builder()
             .version(ServerApiVersion.V1)
             .build();
@@ -52,7 +52,7 @@ public class Interfaz extends JFrame{
 
     public Interfaz() {
         // Set up the frame
-        setTitle("Simple GUI");
+        setTitle("TT 23-2-0003");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1280, 720);
         setLocationRelativeTo(null);

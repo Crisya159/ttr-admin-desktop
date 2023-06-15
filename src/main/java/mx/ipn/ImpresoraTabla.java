@@ -13,7 +13,7 @@ public class ImpresoraTabla {
     //             filePath - la ruta del archivo a crear
     public void imprimir(JTable table, String filePath) {
         try {
-            try ( // Crear un libro de trabajo de Excel 
+            try ( // Crear un libro de trabajo de Excel
             Workbook workbook = new XSSFWorkbook()) {
                 // Crear una hoja de trabajo de Excel
                 Sheet hoja = workbook.createSheet("Datos");
@@ -27,7 +27,7 @@ public class ImpresoraTabla {
                 estiloHeader.setBorderLeft(BorderStyle.THIN); // Establecer el estilo de la linea izquierda
                 estiloHeader.setBorderRight(BorderStyle.THIN); // Establecer el estilo de la linea derecha
                 estiloHeader.setBorderTop(BorderStyle.THIN); // Establecer el estilo de la linea superior
-                
+
                 Font font = workbook.createFont(); // Crear un template para la fuente
                 font.setColor(IndexedColors.WHITE.getIndex()); // Establecer el color de la fuente
                 estiloHeader.setFont(font); // Establecer la fuente
@@ -63,7 +63,7 @@ public class ImpresoraTabla {
                 }
 
                 // Si el archivo existe, se sobreescribe
-                try (FileOutputStream outputStream = new FileOutputStream(archivo)) { // Crear un objeto FileOutputStream (para escribir los bytes del archivo)  
+                try (FileOutputStream outputStream = new FileOutputStream(archivo)) { // Crear un objeto FileOutputStream (para escribir los bytes del archivo)
                     workbook.write(outputStream); // Escribir el libro de trabajo de Excel en el archivo
                 }
             }
