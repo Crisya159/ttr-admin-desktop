@@ -1,18 +1,24 @@
 package mx.ipn;
 
 import com.mongodb.MongoException;
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
+import com.mongodb.client.model.UnwindOptions;
 import com.mongodb.client.MongoCollection;
 
 import java.util.List;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.apache.commons.collections4.IterableUtils;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 
 public class App {
@@ -27,24 +33,25 @@ public class App {
         List<Document> statusReports = new ArrayList<>();
 
         try {
-            // Send a ping to confirm a successful connection
+            // Enviar un ping para confirmar la conexion exitosa
             MongoDatabase database = mongoClient.getDatabase("test");
             database.runCommand(new Document("ping", 1));
             System.out.println("Pinged your deployment. You successfully connected to MongoDB!");
 
             MongoCollection<Document> collection = database.getCollection("reports");
 
-            // Query for all the PDF files
-            Document query = new Document();
-            FindIterable<Document> reports = collection.find(query);
+            List<Bson> pipeline = Arrays.asList(
+                Aggregates.lookup("tts", "_id", "reportes", "tt"),
+                Aggregates.unwind("$tt", new UnwindOptions().preserveNullAndEmptyArrays(true)),
+                Aggregates.project(Projections.fields(
+                    Projections.include("filename", "version", "aprobado", "comentarios", "createdAt", "tt.numero_tt"),
+                    Projections.computed("numero_tt", "$tt.numero_tt")
+                ))
+            );
 
-            for(Document report : reports){
-                // lookup for the tt that contains the report id in the reportes list of reports ids
-                MongoCollection<Document> collection2 = mongoClient.getDatabase("test").getCollection("tts");
-                Document query2 = new Document("reportes", report.get("_id"));
-                FindIterable<Document> tts = collection2.find(query2);
-                Document tt = tts.first();
-                report.put("numero_tt", tt.get("numero_tt"));
+            AggregateIterable<Document> results = collection.aggregate(pipeline);
+
+            for (Document report : results) {
                 statusReports.add(report);
             }
 
@@ -59,7 +66,7 @@ public class App {
 
     public FindIterable<Document> getReportsByFileName(String fileName) {
         try {
-            // Send a ping to confirm a successful connection
+            // Enviar un ping para confirmar la conexion exitosa
             MongoDatabase database = mongoClient.getDatabase("test");
             database.runCommand(new Document("ping", 1));
             System.out.println("Pinged your deployment. You successfully connected to MongoDB!");
@@ -120,21 +127,22 @@ public class App {
     public List<Document> getReportsByStatus(String status){
         List<Document> statusReports = new ArrayList<>();
         try{
-            MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("reports");
-            // query regex para buscar los reportes que tengan un status que contenga la busqueda
-            Document query = new Document("aprobado", new Document("$regex", status));
-            FindIterable<Document> reports = collection.find(query);
+            MongoCollection<Document> reportsCollection = mongoClient.getDatabase("test").getCollection("reports");
 
-            for(Document report : reports){
-                // lookup for the tt that contains the report id in the reportes list of reports ids
-                MongoCollection<Document> collection2 = mongoClient.getDatabase("test").getCollection("tts");
-                Document query2 = new Document("reportes", report.get("_id"));
-                FindIterable<Document> tts = collection2.find(query2);
-                Document tt = tts.first();
-                report.put("numero_tt", tt.get("numero_tt"));
+            List<Bson> pipeline = Arrays.asList(
+                Aggregates.match(Filters.regex("aprobado", status)),
+                Aggregates.lookup("tts", "_id", "reportes", "tt"),
+                Aggregates.unwind("$tt", new UnwindOptions().preserveNullAndEmptyArrays(true)),
+                Aggregates.project(Projections.fields(
+                    Projections.include("filename", "version", "aprobado", "comentarios", "createdAt", "tt.numero_tt"),
+                    Projections.computed("numero_tt", "$tt.numero_tt")
+                ))
+            );
+
+            AggregateIterable<Document> results = reportsCollection.aggregate(pipeline);
+
+            for (Document report : results) {
                 statusReports.add(report);
-
-
             }
 
             return statusReports;
@@ -205,22 +213,21 @@ public class App {
 
     public List<Document> getUsers(){
         try {
-            MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("users");
-            FindIterable<Document> users = collection.find();
+            MongoCollection<Document> usersCollection = mongoClient.getDatabase("test").getCollection("users");
+
+            List<Bson> pipeline = Arrays.asList(
+                Aggregates.lookup("tts", "tt", "_id", "tt"),
+                Aggregates.unwind("$tt", new UnwindOptions().preserveNullAndEmptyArrays(true)),
+                Aggregates.project(Projections.fields(
+                    Projections.include("nombres", "apellido_paterno", "apellido_materno", "correo_electronico", "boleta", "tt"),
+                    Projections.computed("tt", new Document("$ifNull", Arrays.asList("$tt.numero_tt", "No asignado")))
+                ))
+            );
+
+            AggregateIterable<Document> results = usersCollection.aggregate(pipeline);
 
             List<Document> modifiedUsers = new ArrayList<>();
-
-            for (Document user : users) {
-                MongoCollection<Document> collection2 = mongoClient.getDatabase("test").getCollection("tts");
-                Document query2 = new Document("_id", new Document("$eq", user.get("tt")));
-                FindIterable<Document> tts = collection2.find(query2);
-                if (tts != null && tts.iterator().hasNext()) {
-                    for (Document tt : tts) {
-                        user.put("tt", tt.get("numero_tt"));
-                    }
-                } else {
-                    user.put("tt", "No asignado");
-                }
+            for (Document user : results) {
                 modifiedUsers.add(user);
             }
             return modifiedUsers;

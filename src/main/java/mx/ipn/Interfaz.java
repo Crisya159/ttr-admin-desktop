@@ -29,7 +29,7 @@ public class Interfaz extends JFrame{
 
     // ------------------------------------------------------ informacion para conectarse a la base de datos ------------------------------------------------------
     // ------------------------------------------------------------------------(SENSIBLE)--------------------------------------------------------------------------
-    private static String connectionString = "mongodb+srv://crisya78:123456a@test.ywvlcxo.mongodb.net/?retryWrites=true&w=majority";
+    private static String connectionString = "mongodb://localhost:27017";
     private static ServerApi serverApi = ServerApi.builder()
             .version(ServerApiVersion.V1)
             .build();
