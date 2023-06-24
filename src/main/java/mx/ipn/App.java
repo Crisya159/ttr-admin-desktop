@@ -152,12 +152,27 @@ public class App {
         return null;
     }
 
-    public Document getReportToOpen(String filename, String version){
+    public Document getReportToOpen(String filename, String version, String numero_tt){
         try{
-            MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("reports");
-            Document query = new Document("filename", filename).append("version", Integer.parseInt(version));
-            FindIterable<Document> reports = collection.find(query);
-            return reports.first();
+            MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("tts");
+            Document query = new Document("numero_tt", numero_tt);
+            FindIterable<Document> tts = collection.find(query);
+            Document tt = tts.first();
+            // obtener el reporte seleccionado de la lista
+            ArrayList<String> reports_ids = (ArrayList<String>) tt.get("reportes");
+            MongoCollection<Document> collection2 = mongoClient.getDatabase("test").getCollection("reports");
+            Document query2 = new Document("_id", new Document("$in", reports_ids));
+            FindIterable<Document> reports = collection2.find(query2);
+
+            Document reporte = null;
+            for(Document report : reports){
+                if(report.get("filename").equals(filename) && report.get("version").equals(Integer.parseInt(version))){
+                    reporte = report;
+                    break;
+                }
+            }
+            return reporte;
+
         } catch (MongoException e) {
             e.printStackTrace();
         }

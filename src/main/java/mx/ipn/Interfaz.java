@@ -248,7 +248,7 @@ public class Interfaz extends JFrame{
         });
 
         // boton para abrir el reporte seleccionado
-        JButton openFileButton = new JButton("Abrir reporte seleccionado");
+        JButton openFileButton = new JButton("Abrir reporte seleccionado y acuse");
         busquedaYResultadosPanel.add(openFileButton, BorderLayout.SOUTH);
 
         // Abrir reporte seleccionado de la lista en un navegador
@@ -260,8 +260,10 @@ public class Interfaz extends JFrame{
                 String filename = selectedPDF.substring(selectedPDF.indexOf(")") + 2, selectedPDF.indexOf("version:") - 1);
                 // Se obtiene la version del PDF
                 String version = selectedPDF.substring(selectedPDF.indexOf("version:") + 9);
+                // Se obtiene el numero de TT del reprote
+                String numero_tt = selectedPDF.substring(selectedPDF.indexOf("(") + 1, selectedPDF.indexOf(")"));
                 // Se obtiene el PDF
-                Document report = app.getReportToOpen(filename, version);
+                Document report = app.getReportToOpen(filename, version, numero_tt);
                 // Extract the binary data and create PDF document
                 if (report != null) {
                     try {
@@ -270,7 +272,7 @@ public class Interfaz extends JFrame{
                         PDDocument document = PDDocument.load(new ByteArrayInputStream(bytes));
 
                         // Save the PDF to a temporary file
-                        File tempFile = File.createTempFile("my_report", ".pdf");
+                        File tempFile = File.createTempFile("reporte", ".pdf");
                         document.save(tempFile);
 
                         // Open the PDF in a browser
@@ -278,6 +280,22 @@ public class Interfaz extends JFrame{
 
                         // Close the PDF document
                         document.close();
+
+                        Document acuse = (Document) report.get("acuse");
+                        Binary pdfAcuseData = acuse.get("data", Binary.class);
+                        byte[] bytesAcuse = pdfAcuseData.getData();
+                        PDDocument documentAcuse = PDDocument.load(new ByteArrayInputStream(bytesAcuse));
+
+                        // Save the PDF to a temporary file
+                        File tempAcuse = File.createTempFile("acuse", ".pdf");
+                        documentAcuse.save(tempAcuse);
+
+                        // Open the PDF in a browser
+                        Desktop.getDesktop().browse(tempAcuse.toURI());
+
+                        // Close the PDF document
+                        documentAcuse.close();
+
                     } catch (Exception e1) {
                         System.out.println("Error al abrir el PDF.");
                         System.out.println(e);
@@ -299,7 +317,7 @@ public class Interfaz extends JFrame{
 
         JPanel reportDetailsLabelsPanel = new JPanel(new GridLayout(5, 1));
         String selectedPDF = buscaPorTTList.getSelectedValue();
-        String filename = "", version = "", date = " ";
+        String filename = "", version = "", date = " ", numero_tt = "";
 
         if (selectedPDF == null){
             selectedPDF = "No se ha seleccionado un reporte.";
@@ -308,8 +326,10 @@ public class Interfaz extends JFrame{
             filename = selectedPDF.substring(selectedPDF.indexOf(")") + 2, selectedPDF.indexOf("version:") - 1);
             // Se obtiene la version del PDF
             version = selectedPDF.substring(selectedPDF.indexOf("version:") + 9);
+            // Se obtiene numero de tt del reporte
+            numero_tt = selectedPDF.substring(selectedPDF.indexOf("(") + 1, selectedPDF.indexOf(")"));
             // Se obtiene el PDF
-            final Document report = app.getReportToOpen(filename, version);
+            final Document report = app.getReportToOpen(filename, version, numero_tt);
             // Se obtienen los detalles del reporte
             date = report.get("updatedAt").toString();
         }
@@ -344,7 +364,7 @@ public class Interfaz extends JFrame{
                     reportDetailsFilename.setText("Nombre: " + selectedItem.substring(selectedItem.indexOf(")") + 2, selectedItem.indexOf("version:") - 1));
                     reportDetailsVersion.setText("Version: " + selectedItem.substring(selectedItem.indexOf("version:") + 9));
                     Document report = app.getReportToOpen(selectedItem.substring(selectedItem.indexOf(")") + 2, selectedItem.indexOf("version:") - 1),
-                                                            selectedItem.substring(selectedItem.indexOf("version:") + 9));
+                                                            selectedItem.substring(selectedItem.indexOf("version:") + 9), "TT");
                     reportDetailsDate.setText("Fecha de carga: " + report.get("updatedAt").toString());
                     if (report.get("aprobado").toString().equals("Aprobado")){
                         reportDetailStatus.setText("Estado: " + "Aprobado");
@@ -485,7 +505,7 @@ public class Interfaz extends JFrame{
         reportesPendientesList.setModel(reportesPendientesListModel);
 
         // boton para abrir el reporte seleccionado
-        JButton botonAbrirReporte = new JButton("Abrir reporte técnico");
+        JButton botonAbrirReporte = new JButton("Abrir reporte técnico y acuse");
         listaReportesPendientesPanel.add(botonAbrirReporte, BorderLayout.SOUTH);
 
         // Abrir reporte seleccionado de la lista en un navegador
@@ -497,8 +517,10 @@ public class Interfaz extends JFrame{
                 String filename = selectedPDF.substring(selectedPDF.indexOf(")") + 2, selectedPDF.indexOf("version:") - 1);
                 // Se obtiene la version del PDF
                 String version = selectedPDF.substring(selectedPDF.indexOf("version:") + 9);
+                // Se obtiene el numero de TT del reprote
+                String numero_tt = selectedPDF.substring(selectedPDF.indexOf("(") + 1, selectedPDF.indexOf(")"));
                 // Se obtiene el PDF
-                Document report = app.getReportToOpen(filename, version);
+                Document report = app.getReportToOpen(filename, version, numero_tt);
                 // Extract the binary data and create PDF document
                 if (report != null) {
                     try {
@@ -507,7 +529,7 @@ public class Interfaz extends JFrame{
                         PDDocument document = PDDocument.load(new ByteArrayInputStream(bytes));
 
                         // Save the PDF to a temporary file
-                        File tempFile = File.createTempFile("my_report", ".pdf");
+                        File tempFile = File.createTempFile("reporte", ".pdf");
                         document.save(tempFile);
 
                         // Open the PDF in a browser
@@ -515,6 +537,22 @@ public class Interfaz extends JFrame{
 
                         // Close the PDF document
                         document.close();
+
+                        Document acuse = (Document) report.get("acuse");
+                        Binary pdfAcuseData = acuse.get("data", Binary.class);
+                        byte[] bytesAcuse = pdfAcuseData.getData();
+                        PDDocument documentAcuse = PDDocument.load(new ByteArrayInputStream(bytesAcuse));
+
+                        // Save the PDF to a temporary file
+                        File tempAcuse = File.createTempFile("acuse", ".pdf");
+                        documentAcuse.save(tempAcuse);
+
+                        // Open the PDF in a browser
+                        Desktop.getDesktop().browse(tempAcuse.toURI());
+
+                        // Close the PDF document
+                        documentAcuse.close();
+
                     } catch (Exception e1) {
                         System.out.println("Error al abrir el PDF.");
                         System.out.println(e);
@@ -555,7 +593,7 @@ public class Interfaz extends JFrame{
 
         JPanel reportDetailsLabelsPanel = new JPanel(new GridLayout(5, 1));
         String selectedPDF = reportesPendientesList.getSelectedValue();
-        String filename = "", version = "", date = " ", tt= " ";
+        String filename = "", version = "", date = " ", numero_tt= " ";
 
         if (selectedPDF == null){
             selectedPDF = "No se ha seleccionado un reporte.";
@@ -565,15 +603,15 @@ public class Interfaz extends JFrame{
             // Se obtiene la version del PDF
             version = selectedPDF.substring(selectedPDF.indexOf("version:") + 9);
             // Se obtiene el tt del PDF
-            tt = selectedPDF.substring(selectedPDF.indexOf("(") + 1, selectedPDF.indexOf(")"));
+            numero_tt = selectedPDF.substring(selectedPDF.indexOf("(") + 1, selectedPDF.indexOf(")"));
             // Se obtiene el PDF
-            final Document report = app.getReportToOpen(filename, version);
+            final Document report = app.getReportToOpen(filename, version, numero_tt);
             // Se obtienen los detalles del reporte
             date = report.get("updatedAt").toString();
         }
 
         // Se crean canvas para mostrar los detalles del reporte
-        JLabel reportDetailsTT = new JLabel("TT: " + tt);
+        JLabel reportDetailsTT = new JLabel("TT: " + numero_tt);
         JLabel reportDetailsFilename = new JLabel("Nombre: " + filename);
         JLabel reportDetailsVersion = new JLabel("Version: " + version);
         JLabel reportDetailsDate = new JLabel("Fecha de carga: " + date);
@@ -602,7 +640,8 @@ public class Interfaz extends JFrame{
                     reportDetailsFilename.setText("Nombre: " + selectedItem.substring(selectedItem.indexOf(")") + 2, selectedItem.indexOf("version:") - 1));
                     reportDetailsVersion.setText("Version: " + selectedItem.substring(selectedItem.indexOf("version:") + 9));
                     Document report = app.getReportToOpen(selectedItem.substring(selectedItem.indexOf(")") + 2, selectedItem.indexOf("version:") - 1),
-                                                            selectedItem.substring(selectedItem.indexOf("version:") + 9));
+                                                            selectedItem.substring(selectedItem.indexOf("version:") + 9),
+                                                            selectedItem.substring(selectedItem.indexOf("(") + 1, selectedItem.indexOf(")")));
                     reportDetailsDate.setText("Fecha de carga: " + report.get("updatedAt").toString());
                     if (report.get("aprobado").toString().equals("Aprobado")){
                         reportDetailStatus.setText("Estado: " + "Aprobado");
