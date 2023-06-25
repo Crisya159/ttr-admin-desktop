@@ -317,7 +317,7 @@ public class Interfaz extends JFrame{
 
         JPanel reportDetailsLabelsPanel = new JPanel(new GridLayout(5, 1));
         String selectedPDF = buscaPorTTList.getSelectedValue();
-        String filename = "", version = "", date = " ", numero_tt = "";
+        String filename = "", version = "", date = " ", numero_tt = "", filename_acuse = "";;
 
         if (selectedPDF == null){
             selectedPDF = "No se ha seleccionado un reporte.";
@@ -332,11 +332,15 @@ public class Interfaz extends JFrame{
             final Document report = app.getReportToOpen(filename, version, numero_tt);
             // Se obtienen los detalles del reporte
             date = report.get("updatedAt").toString();
+            // Se obtiene el acuse
+            Document acuse = (Document) report.get("acuse");
+            filename_acuse = acuse.get("filename").toString();
         }
 
         // Se crean canvas para mostrar los detalles del reporte
         JLabel reportDetailsTT = new JLabel("TT: " + buscaPorTTField.getText());
-        JLabel reportDetailsFilename = new JLabel("Nombre: " + filename);
+        JLabel reportDetailsFilename = new JLabel("Reporte técnico: " + filename);
+        JLabel reportDetailsAcuse = new JLabel("Acuse: " + filename_acuse);
         JLabel reportDetailsVersion = new JLabel("Version: " + version);
         JLabel reportDetailsDate = new JLabel("Fecha de carga: " + date);
         JLabel reportDetailStatus = new JLabel("Estado: ");
@@ -346,6 +350,7 @@ public class Interfaz extends JFrame{
         reportDetailsLabelsPanel.add(reportDetailsVersion);
         reportDetailsLabelsPanel.add(reportDetailsDate);
         reportDetailsLabelsPanel.add(reportDetailStatus);
+        reportDetailsLabelsPanel.add(reportDetailsAcuse);
 
         reportDetailsPanel.add(reportDetailsLabelsPanel, BorderLayout.CENTER);
 
@@ -355,16 +360,18 @@ public class Interfaz extends JFrame{
                 String selectedItem = buscaPorTTList.getSelectedValue();
                 if (selectedItem == null){
                     reportDetailsTT.setText("TT: ");
-                    reportDetailsFilename.setText("Nombre: ");
+                    reportDetailsFilename.setText("Reporte técnico: ");
                     reportDetailsVersion.setText("Version: ");
                     reportDetailsDate.setText("Fecha de carga: ");
                     reportDetailStatus.setText("Estado: ");
+                    reportDetailsAcuse.setText("Acuse: ");
                 }else{
                     reportDetailsTT.setText("TT: " + selectedItem.substring(selectedItem.indexOf("(") + 1, selectedItem.indexOf(")")));
                     reportDetailsFilename.setText("Nombre: " + selectedItem.substring(selectedItem.indexOf(")") + 2, selectedItem.indexOf("version:") - 1));
                     reportDetailsVersion.setText("Version: " + selectedItem.substring(selectedItem.indexOf("version:") + 9));
                     Document report = app.getReportToOpen(selectedItem.substring(selectedItem.indexOf(")") + 2, selectedItem.indexOf("version:") - 1),
-                                                            selectedItem.substring(selectedItem.indexOf("version:") + 9), "TT");
+                                                            selectedItem.substring(selectedItem.indexOf("version:") + 9),
+                                                            selectedItem.substring(selectedItem.indexOf("(") + 1, selectedItem.indexOf(")")));
                     reportDetailsDate.setText("Fecha de carga: " + report.get("updatedAt").toString());
                     if (report.get("aprobado").toString().equals("Aprobado")){
                         reportDetailStatus.setText("Estado: " + "Aprobado");
@@ -373,6 +380,11 @@ public class Interfaz extends JFrame{
                     }else{
                         reportDetailStatus.setText("Estado: " + "Pendiente de revisión");
                     }
+                    Document acuse = (Document) report.get("acuse");
+                    if (acuse == null){
+                        reportDetailsAcuse.setText("Acuse: Sin acuse");
+                    }else
+                        reportDetailsAcuse.setText("Acuse: " + acuse.get("filename").toString());
 
                 }
             }
@@ -593,7 +605,7 @@ public class Interfaz extends JFrame{
 
         JPanel reportDetailsLabelsPanel = new JPanel(new GridLayout(5, 1));
         String selectedPDF = reportesPendientesList.getSelectedValue();
-        String filename = "", version = "", date = " ", numero_tt= " ";
+        String filename = "", version = "", date = " ", numero_tt= " ", filename_acuse = "";
 
         if (selectedPDF == null){
             selectedPDF = "No se ha seleccionado un reporte.";
@@ -608,11 +620,15 @@ public class Interfaz extends JFrame{
             final Document report = app.getReportToOpen(filename, version, numero_tt);
             // Se obtienen los detalles del reporte
             date = report.get("updatedAt").toString();
+            // Se obtiene el acuse
+            Document acuse = (Document) report.get("acuse");
+            filename_acuse = acuse.get("filename").toString();
         }
 
         // Se crean canvas para mostrar los detalles del reporte
         JLabel reportDetailsTT = new JLabel("TT: " + numero_tt);
-        JLabel reportDetailsFilename = new JLabel("Nombre: " + filename);
+        JLabel reportDetailsFilename = new JLabel("Reporte técnico: " + filename);
+        JLabel reportDetailsAcuse = new JLabel("Acuse: " + filename_acuse);
         JLabel reportDetailsVersion = new JLabel("Version: " + version);
         JLabel reportDetailsDate = new JLabel("Fecha de carga: " + date);
         JLabel reportDetailStatus = new JLabel("Estado: ");
@@ -622,6 +638,7 @@ public class Interfaz extends JFrame{
         reportDetailsLabelsPanel.add(reportDetailsVersion);
         reportDetailsLabelsPanel.add(reportDetailsDate);
         reportDetailsLabelsPanel.add(reportDetailStatus);
+        reportDetailsLabelsPanel.add(reportDetailsAcuse);
 
         reportDetailsPanel.add(reportDetailsLabelsPanel, BorderLayout.CENTER);
 
@@ -631,10 +648,11 @@ public class Interfaz extends JFrame{
                 String selectedItem = reportesPendientesList.getSelectedValue();
                 if (selectedItem == null){
                     reportDetailsTT.setText("TT: ");
-                    reportDetailsFilename.setText("Nombre: ");
+                    reportDetailsFilename.setText("Reporte técnico: ");
                     reportDetailsVersion.setText("Version: ");
                     reportDetailsDate.setText("Fecha de carga: ");
                     reportDetailStatus.setText("Estado: ");
+                    reportDetailsAcuse.setText("Acuse: ");
                 }else{
                     reportDetailsTT.setText("TT: " + selectedItem.substring(selectedItem.indexOf("(") + 1, selectedItem.indexOf(")")));
                     reportDetailsFilename.setText("Nombre: " + selectedItem.substring(selectedItem.indexOf(")") + 2, selectedItem.indexOf("version:") - 1));
@@ -650,7 +668,11 @@ public class Interfaz extends JFrame{
                     }else{
                         reportDetailStatus.setText("Estado: " + "Pendiente de revisión");
                     }
-
+                    Document acuse = (Document) report.get("acuse");
+                    if (acuse == null){
+                        reportDetailsAcuse.setText("Acuse: Sin acuse");
+                    }else
+                        reportDetailsAcuse.setText("Acuse: " + acuse.get("filename").toString());
                 }
             }
         });
